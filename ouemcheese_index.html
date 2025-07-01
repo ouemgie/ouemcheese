@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OUEMCHEESE!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body,
+    html {
+      height: 100%;
+      width: 100%;
+      overflow-x: hidden;
+      background: linear-gradient(to bottom, #FFF6C8, #ffffff);
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      animation: fadeInDown 1s ease-out;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin-bottom: 1.5rem;
+      animation: fadeInDown 1.2s ease-out;
+    }
+
+    .button {
+      background-color: #FDCB00;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.3s;
+      margin: 0.5rem;
+      font-weight: 600;
+    }
+
+    .button:hover {
+      transform: scale(1.05);
+      background-color: #e6b800;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .section {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .cameraWrapper {
+      position: relative;
+      width: 90vw;
+      max-width: 600px;
+      aspect-ratio: 4 / 3;
+    }
+
+    video,
+    canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    .frameOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .frames {
+      display: flex;
+      overflow-x: auto;
+      gap: 1rem;
+      padding: 1rem;
+      justify-content: flex-start;
+      scroll-snap-type: x mandatory;
+      width: 100%;
+    }
+
+    .frames img {
+      flex: 0 0 auto;
+      width: 160px;
+      height: auto;
+      cursor: pointer;
+      border: 3px solid transparent;
+      border-radius: 10px;
+      transition: 0.2s;
+      scroll-snap-align: start;
+    }
+
+    .frames img.selected {
+      border-color: #FDCB00;
+    }
+
+    .flash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: white;
+      opacity: 0;
+      z-index: 9999;
+      pointer-events: none;
+      animation: flashEffect 0.4s ease-in-out;
+    }
+
+    .popup-message {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 1rem 2rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      opacity: 0;
+      animation: fadeInUp 2s ease forwards;
+      z-index: 10000;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes flashEffect {
+      0% {
+        opacity: 0;
+      }
+
+      30% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      20%,
+      80% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mainScreen" style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <h1>OUEMCHEESE!</h1>
+    <h2>Say cheese, snap growth</h2>
+    <button class="button" onclick="goToSection('uploadSection')">Upload Photo</button>
+    <button class="button" onclick="goToSection('cameraSection')">Camera</button>
+  </div>
+
+  <div id="uploadSection" class="section">
+    <h1>OUEMCHEESE!</h1>
+    <h2>Say cheese, snap growth</h2>
+    <input type="file" accept="image/*" onchange="loadImage(event)" />
+    <div class="frames" id="frameListUpload"></div>
+    <canvas id="previewUpload"></canvas>
+    <button class="button" onclick="downloadImage('previewUpload')">Download</button>
+  </div>
+
+  <div id="cameraSection" class="section">
+    <h1>OUEMCHEESE!</h1>
+    <h2>Say cheese, snap growth</h2>
+    <div class="cameraWrapper">
+      <video id="camera" autoplay playsinline></video>
+      <img id="cameraFrame" class="frameOverlay" />
+    </div>
+    <button class="button" onclick="takePhoto()">Take a photo</button>
+    <div class="frames" id="frameListCamera"></div>
+    <canvas id="previewCamera"></canvas>
+    <button class="button" onclick="downloadImage('previewCamera')">Download</button>
+  </div>
+
+  <div id="flashEffect" class="flash hidden"></div>
+  <div id="popupMessage" class="popup-message hidden">Foto berhasil disimpan!</div>
+
+  <script>
+    const frames = Array.from({ length: 10 }, (_, i) => `Frame${i + 1}.png`);
+    let selectedUploadFrame = null;
+    let selectedCameraFrame = null;
+    let uploadedImage = null;
+
+    function goToSection(sectionId) {
+      document.getElementById('mainScreen').style.display = 'none';
+      document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+      const section = document.getElementById(sectionId);
+      section.style.display = 'flex';
+      section.scrollIntoView({ behavior: 'smooth' });
+
+      if (sectionId === 'uploadSection') loadFrameList('frameListUpload', 'upload');
+      if (sectionId === 'cameraSection') {
+        loadFrameList('frameListCamera', 'camera');
+        startCamera();
+      }
+    }
+
+    function loadFrameList(containerId, type) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      frames.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.onclick = () => {
+          container.querySelectorAll('img').forEach(i => i.classList.remove('selected'));
+          img.classList.add('selected');
+          if (type === 'upload') {
+            selectedUploadFrame = src;
+            drawPreview('previewUpload', uploadedImage, selectedUploadFrame);
+          } else {
+            selectedCameraFrame = src;
+            document.getElementById('cameraFrame').src = src;
+          }
+        };
+        container.appendChild(img);
+      });
+    }
+
+    function loadImage(event) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        uploadedImage = new Image();
+        uploadedImage.onload = () => drawPreview('previewUpload', uploadedImage, selectedUploadFrame);
+        uploadedImage.src = e.target.result;
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
+
+    function drawPreview(canvasId, image, frameSrc) {
+      if (!image || !frameSrc) return;
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const frame = new Image();
+      frame.onload = () => ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+      frame.src = frameSrc;
+    }
+
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({ video: { width: 600, height: 450 } })
+        .then(stream => {
+          document.getElementById('camera').srcObject = stream;
+        })
+        .catch(err => alert('Failed to access camera: ' + err));
+    }
+
+    function takePhoto() {
+      const video = document.getElementById('camera');
+      const canvas = document.getElementById('previewCamera');
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      if (selectedCameraFrame) {
+        const frame = new Image();
+        frame.onload = () => ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+        frame.src = selectedCameraFrame;
+      }
+      flashEffect();
+    }
+
+    function flashEffect() {
+      const flash = document.getElementById('flashEffect');
+      flash.classList.remove('hidden');
+      setTimeout(() => flash.classList.add('hidden'), 400);
+    }
+
+    function downloadImage(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        alert('Foto belum siap untuk diunduh. Pastikan kamu sudah mengambil foto atau mengunggah gambar.');
+        return;
+      }
+      const link = document.createElement('a');
+      link.download = 'ouemcheese-photo.png';
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showPopupMessage();
+    }
+
+    function showPopupMessage() {
+      const popup = document.getElementById('popupMessage');
+      popup.classList.remove('hidden');
+      setTimeout(() => popup.classList.add('hidden'), 3000);
+    }
+  </script>
+</body>
+
+</html>
